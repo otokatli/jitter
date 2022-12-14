@@ -31,7 +31,7 @@ int main()
     std::cout << "Test the jitter of a control loop" << std::endl;
 
     const int numIter = 1000;
-    std::array<double, numIter> tVec {0.0};
+    std::array<int, numIter> tVec {0};
 
     auto tStart = Clock::now();
     auto t = Clock::now();
