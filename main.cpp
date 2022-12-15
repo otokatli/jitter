@@ -7,6 +7,7 @@
 #include <array>
 #include <vector>
 #include <chrono>
+#include <thread>
 
 
 std::string getFileName();
@@ -65,6 +66,34 @@ void deterministicLoop1(const size_t numIter, const int timeStep)
     saveData(tVec);
 }
 
+void deterministicLoop2(const size_t numIter, const int timeStep)
+{
+    typedef std::chrono::high_resolution_clock Clock;
+    std::vector<int> tVec(numIter, 0);
+
+    // Starting time of the loop
+    auto t = Clock::now();
+    auto tStart = t;
+    auto tPrev = t;
+    auto tNext = t;
+
+    // Time step size for the deterministic loop
+    std::chrono::duration<int, std::nano> tStep(timeStep);
+
+    for (auto& ti : tVec)
+    {
+        t = Clock::now();
+
+        ti = std::chrono::duration_cast<std::chrono::nanoseconds>(t-tStart).count();
+        
+        tNext += tStep;
+        std::this_thread::sleep_until(tNext);
+    }
+
+    // Save the experimen data
+    saveData(tVec);
+}
+
 int main()
 {
     // Number of iterations for the deterministic loop
@@ -77,6 +106,9 @@ int main()
 
     std::cout << "> Method 1: Using while-loop to block deterministic loop" << std::endl;
     deterministicLoop1(numIter, timeStep);
+
+    std::cout << "> Method 2: Using std::thread to block deterministic loop" << std::endl;
+    deterministicLoop2(numIter, timeStep);
  
     return 0;
 }
