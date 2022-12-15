@@ -5,7 +5,13 @@
 #include <fstream>
 #include <iomanip>
 #include <array>
+#include <vector>
 #include <chrono>
+
+
+std::string getFileName();
+void saveData(std::vector<int>);
+void deterministicLoop1(const size_t, const int);
 
 
 std::string getFileName()
@@ -20,25 +26,34 @@ std::string getFileName()
     return "";
 }
 
+void saveData(std::vector<int> tVec)
+{
+    // Save the recorded time stamps to a csv file
+    std::ofstream outputFile(getFileName());
 
-int main()
+    for (const auto& t : tVec)
+        outputFile << t << std::endl;
+    
+    outputFile.close();
+}
+
+
+void deterministicLoop1(const size_t numIter, const int timeStep)
 {
     typedef std::chrono::high_resolution_clock Clock;
+    std::vector<int> tVec(numIter, 0);
 
-    std::cout << "Test the jitter of a control loop" << std::endl;
-
-    const int numIter = 1000;
-    std::array<int, numIter> tVec {0};
-
-    auto tStart = Clock::now();
+    // Starting time of the loop
     auto t = Clock::now();
+    auto tStart = t;
     auto tPrev = t;
-    
-    std::chrono::duration<int, std::nano> tStep(1000);
 
-    for (int i = 0; i < numIter; ++i)
+    // Time step size for the deterministic loop
+    std::chrono::duration<int, std::nano> tStep(timeStep);
+    
+    for (auto& ti : tVec)
     {
-        tVec[i] = std::chrono::duration_cast<std::chrono::nanoseconds>(t-tStart).count();
+        ti = std::chrono::duration_cast<std::chrono::nanoseconds>(t-tStart).count();
         while (t - tPrev < tStep)
         {
             t = Clock::now();
@@ -46,13 +61,22 @@ int main()
         tPrev = t;
     }
 
-    // Save the recorded time stamps to a csv file
-    std::ofstream outputFile(getFileName());
+    // Save the experimen data
+    saveData(tVec);
+}
 
-    for (const auto& i : tVec)
-        outputFile << i << std::endl;
-    
-    outputFile.close();
+int main()
+{
+    // Number of iterations for the deterministic loop
+    const size_t numIter = 100000;
 
+    // Time step for the loop in nanoseconds
+    const int timeStep = 1000000;
+
+    std::cout << "Test the jitter of a control loop" << std::endl;
+
+    std::cout << "> Method 1: Using while-loop to block deterministic loop" << std::endl;
+    deterministicLoop1(numIter, timeStep);
+ 
     return 0;
 }
